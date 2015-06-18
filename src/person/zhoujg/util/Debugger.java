@@ -1,0 +1,11 @@
+package person.zhoujg.util;
+
+public class Debugger {
+	public static boolean DEBUG = true;
+	
+	public static void debug(String msg) {
+		if (DEBUG){
+			System.err.println(msg);
+		}
+	}
+}

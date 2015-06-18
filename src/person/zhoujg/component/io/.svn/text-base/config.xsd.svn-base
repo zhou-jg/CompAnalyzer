@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ns:schema xmlns="http://www.sa.lab/depend" xmlns:ns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://www.sa.lab/depend">
+	<ns:include schemaLocation="model.xsd"/>
+	
+	<ns:element name="project">
+		<ns:complexType>
+			<ns:sequence>
+				<ns:element minOccurs="0" name="classPath">
+					<ns:complexType>
+						<ns:sequence>
+							<ns:element maxOccurs="unbounded" name="path" type="ns:string"/>
+						</ns:sequence>
+					</ns:complexType>
+				</ns:element>
+				<ns:element minOccurs="0" name="packageFilter">
+					<ns:complexType>
+						<ns:sequence>
+							<ns:element maxOccurs="unbounded" ref="package"/>
+						</ns:sequence>
+					</ns:complexType>
+				</ns:element>
+				<ns:choice>
+					<ns:element minOccurs="0" name="model" type="ns:string"/>
+					<ns:choice>
+						<ns:element minOccurs="0" name="layers" type="modelType"/>
+						<ns:element minOccurs="0" name="components" type="modelType"/>	
+					</ns:choice>
+				</ns:choice>			
+			</ns:sequence>
+			
+			<ns:attribute name="name" type="ns:string" use="required"/>
+			<ns:attribute name="report" type="ns:string" use="required"/>
+			<ns:attribute default="false" name="strictLayer" type="booleanType"/>
+			<ns:attribute name="circleFilter">
+				<ns:simpleType>
+					<ns:list itemType="circleFilterType"/>
+				</ns:simpleType>
+			</ns:attribute>
+		</ns:complexType>	
+	</ns:element>
+</ns:schema>

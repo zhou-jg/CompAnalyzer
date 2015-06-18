@@ -1,0 +1,63 @@
+package lab.sa.jdepend.model.problem;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lab.sa.jdepend.model.ICircleObject;
+
+public class DependencyCircle extends DependencyProblem {
+
+	public static final int CLASS_LEVEL = 0;
+	public static final int PACAKGE_LEVEL = 1;
+	public static final int COMPONENT_LEVEL = 2;
+	public static final int CONTAINER_LEVEL = 3;
+	
+	private int level;
+	private List<ICircleObject> elements; 
+	
+	public DependencyCircle(int level){
+		this(level, new ArrayList<ICircleObject>());
+	}
+	
+	public DependencyCircle(int level, List<ICircleObject> list){
+		super(DependencyProblem.CIRCLE);
+		this.level = level;
+		elements = list;
+	}
+
+	public List<ICircleObject> getProblemElements() {
+		return elements;
+	}
+	
+	public int getLevel() {
+		return level;
+	}
+
+
+	public void addProblemElement(ICircleObject obj) {
+		elements.add(obj);
+	}
+
+	public void setProblemElements(List<ICircleObject> objs) {
+		elements = objs;
+	}
+
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		switch (level){
+			case CLASS_LEVEL : sb.append("[ClassCircle] ");break;
+			case COMPONENT_LEVEL : sb.append("[ComponentCircle] "); break;
+			case PACAKGE_LEVEL : sb.append("[PackageCircle] "); break;
+			case CONTAINER_LEVEL : sb.append("[ContainerCircle] "); break;
+		}
+		
+		for (ICircleObject obj: elements){
+			sb.append(obj.getName() + ", ");
+		}
+		sb.deleteCharAt(sb.lastIndexOf(","));
+		sb.append("form a cycle.");
+		return sb.toString();
+	}
+	
+}

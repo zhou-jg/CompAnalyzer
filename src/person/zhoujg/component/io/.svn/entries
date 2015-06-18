@@ -1,0 +1,94 @@
+8
+
+dir
+17
+file:///G:/MyRepository/trunk/architecture/lab.sa.jdepend/src/lab/sa/jdepend/io
+file:///G:/MyRepository
+
+
+
+2014-03-05T07:46:58.879571Z
+10
+zhoujg
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+1d73b45e-375c-9543-83a7-2a89bddd7bcd
+
+config.xsd
+file
+
+
+
+
+2014-03-06T01:24:55.862092Z
+2a6c5ec27521f112b7b45904b1b03e95
+2014-03-05T07:46:58.879571Z
+10
+zhoujg
+
+DepException.java
+file
+
+
+
+
+2014-03-06T01:24:55.862092Z
+e2d4a85017af18fe62d739bb5881da6a
+2014-03-05T07:46:58.879571Z
+10
+zhoujg
+
+report
+dir
+
+UMLModelParser.java
+file
+
+
+
+
+2014-03-06T01:24:55.877710Z
+272602baf755e9a811847f32e0e74a0c
+2014-03-05T07:46:58.879571Z
+10
+zhoujg
+
+internal
+dir
+
+XMLDefinitionReader.java
+file
+26
+
+
+
+2014-04-02T04:09:23.017414Z
+210f6bf1524043917a8c57fb4f573b0d
+2014-04-04T09:08:18.428151Z
+26
+zhoujg
+
+model.xsd
+file
+26
+
+
+
+2014-04-03T08:36:25.758845Z
+afb3ebdb8bba2e0e2e54b6fed7e3bc91
+2014-04-04T09:08:18.428151Z
+26
+zhoujg
+

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ns:schema xmlns="http://www.sa.lab/depend" xmlns:ns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://www.sa.lab/depend">
+	<ns:include schemaLocation="model.xsd"/>
+	
+	<ns:element name="project">
+		<ns:complexType>
+			<ns:sequence>
+				<ns:element name="containers">
+					<ns:complexType>
+						<ns:sequence>
+							<ns:element maxOccurs="unbounded" name="container">
+								<ns:complexType>
+									<ns:sequence>
+										<ns:element maxOccurs="unbounded" name="package">
+											<ns:complexType>
+												<ns:sequence>
+													<ns:element maxOccurs="unbounded" name="class">
+														<ns:complexType>
+															<ns:sequence>
+																<ns:element minOccurs="0" name="extends" type="ns:string"/>
+																<ns:element maxOccurs="unbounded" minOccurs="0" name="implements" type="ns:string"/>
+															</ns:sequence>
+															
+															<ns:attribute name="type" use="required">
+																<ns:simpleType>
+																	<ns:restriction base="ns:string">
+																		<ns:enumeration value="concrete"/>
+																		<ns:enumeration value="abstract"/>
+																		<ns:enumeration value="interface"/>
+																	</ns:restriction>
+																</ns:simpleType>
+															</ns:attribute>
+															<ns:attribute name="name" type="ns:string" use="required"/>
+														</ns:complexType>
+													</ns:element>
+												</ns:sequence>
+												<ns:attribute name="name" type="ns:string"/>
+												<ns:attribute name="afferent" type="ns:integer"/>
+												<ns:attribute name="efferent" type="ns:integer"/>
+												<ns:attribute name="classCount" type="ns:integer"/>
+												<ns:attribute name="concreteClassCount" type="ns:integer"/>
+											</ns:complexType>
+										</ns:element>
+									</ns:sequence>
+									<ns:attribute name="name" type="ns:string"/>
+								</ns:complexType>
+							</ns:element>
+						</ns:sequence>
+					</ns:complexType>
+				</ns:element>				
+				<ns:choice>
+					<ns:element minOccurs="0" name="layers" type="modelType"/>
+					<ns:element minOccurs="0" name="components" type="modelType"/>	
+				</ns:choice>
+				
+				<ns:element minOccurs="0" name="accessProblems">
+					<ns:complexType>
+						<ns:sequence>
+							<ns:element maxOccurs="unbounded" minOccurs="0" name="inBlackList" type="accessProblemType"/>
+							<ns:element maxOccurs="unbounded" minOccurs="0" name="invisible" type="accessProblemType"/>
+							<ns:element maxOccurs="unbounded" minOccurs="0" name="nonInterface" type="accessProblemType"/>
+						</ns:sequence>
+					</ns:complexType>
+				</ns:element>
+				<ns:element minOccurs="0" name="splitPackages">
+					<ns:complexType>
+						<ns:sequence>
+							<ns:element maxOccurs="unbounded" name="package">
+								<ns:complexType>
+									<ns:sequence>
+										<ns:element maxOccurs="unbounded" name="container" type="ns:string"/>
+									</ns:sequence>
+									<ns:attribute name="name" type="ns:string" use="required"/>
+								</ns:complexType>
+							</ns:element>
+						</ns:sequence>
+					</ns:complexType>
+				</ns:element>						
+			</ns:sequence>
+			
+			<ns:attribute name="name" type="ns:string" use="required"/>	
+			<ns:attribute default="false" name="strictLayer" type="booleanType"/>		
+			<ns:attribute name="containers" type="ns:integer"/>
+			<ns:attribute name="components" type="ns:integer"/>
+			<ns:attribute name="packages" type="ns:integer"/>
+			<ns:attribute name="classes" type="ns:integer"/>
+		</ns:complexType>	
+	</ns:element>
+	
+	<ns:complexType name="accessProblemType">
+		<ns:sequence>
+			<ns:element maxOccurs="unbounded" name="compPair">
+				<ns:complexType>
+					<ns:sequence>
+						<ns:element maxOccurs="unbounded" name="class">
+							<ns:complexType>
+								<ns:sequence>
+									<ns:element name="accessedBy">
+										<ns:complexType>
+											<ns:sequence>
+												<ns:element maxOccurs="unbounded" name="class"/>
+											</ns:sequence>
+										</ns:complexType>
+									</ns:element>
+								</ns:sequence>
+								<ns:attribute name="name" type="ns:string" use="required"/>
+              				</ns:complexType>
+            			</ns:element>
+          			</ns:sequence>
+          			<ns:attribute name="dependee" type="ns:string" use="required"/>
+          			<ns:attribute name="dependant" type="ns:string" use="required"/>
+        		</ns:complexType>
+      		</ns:element>
+    	</ns:sequence>
+  	</ns:complexType>
+</ns:schema>

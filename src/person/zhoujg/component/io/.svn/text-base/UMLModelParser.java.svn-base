@@ -1,0 +1,121 @@
+package lab.sa.jdepend.io;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+
+import lab.sa.jdepend.io.internal.ComponentHelper;
+import lab.sa.jdepend.model.Component;
+import lab.sa.jdepend.model.IComponent;
+import lab.sa.jdepend.model.Layer;
+import lab.sa.uml2.parser.util.ArchitectureModelParser;
+
+import org.eclipse.emf.ecore.util.EDataTypeUniqueEList;
+import org.eclipse.uml2.uml.Model;
+import org.eclipse.uml2.uml.Stereotype;
+
+public class UMLModelParser {
+	public static final String ARCHITECTURE = "CompArch";
+	public static final String MODULE		= "Module";
+	public static final String LAYER		= "Layer";
+	public static final String LEVEL		= "level";
+	public static final String STRICT_LAYER = "strictLayer";
+	public static final String API			= "api";
+	public static final String BLACK_LSIT	= "blackList";
+	public static final String WHITE_LIST	= "whiteList";
+	public static final String SEALED		= "sealed";
+	public static final String STEREO_MODULE= "Arch::Module";
+	public static final String STEREO_LAYER	= "Arch::Layer";
+	
+	private static HashMap<String, IComponent> compRegistry = new HashMap<String, IComponent>();
+	private static HashMap<String, ComponentHelper> tempMem = new HashMap<String, ComponentHelper>();
+	
+	public static Collection<IComponent> parse(String modelFile){
+		compRegistry.clear();
+		tempMem.clear();
+		
+		Model model = (Model) ArchitectureModelParser.load(modelFile);
+		org.eclipse.uml2.uml.Package root = ArchitectureModelParser.getContainedPackage(model, ARCHITECTURE);
+		
+		Collection<IComponent> comps = new ArrayList<IComponent>();
+		
+		for (org.eclipse.uml2.uml.Package subPack : root.getNestedPackages()){
+			IComponent comp = traverse(subPack);
+			if (comp != null){
+				comps.add(comp);
+			}
+		}
+		for (IComponent comp : compRegistry.values()){
+			ComponentHelper helper = tempMem.get(comp.getName());
+			if (helper != null){
+				for (String wComp : helper.getWhiteList()){
+					comp.addsToWhiteList(compRegistry.get(wComp));
+				}
+				for (String bComp : helper.getBlackList()){
+					comp.addsToBlackList(compRegistry.get(bComp));
+				}
+			}
+		}
+		return comps;
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected static IComponent traverse(org.eclipse.uml2.uml.Package pack){
+		IComponent packComp = null;
+		
+		if (stereotypesExist(pack, STEREO_MODULE, STEREO_LAYER)){	
+			Stereotype type = pack.getAppliedStereotype(STEREO_MODULE);
+			if (type != null){
+				packComp = new Component(pack.getName());
+			}else {
+				type = pack.getAppliedStereotype(STEREO_LAYER);
+				packComp = new Layer(pack.getName(), (Integer) pack.getValue(type, LEVEL));
+			}
+			compRegistry.put(packComp.getName(), packComp);
+			
+			packComp.isSealed((Boolean)pack.getValue(type, SEALED));
+			packComp.isStrictLayer((Boolean)pack.getValue(type, STRICT_LAYER));
+			Object value = pack.getValue(type, API);
+			if (value != null){
+				for (String api : (EDataTypeUniqueEList<String>)value){
+					packComp.addsToInterface(api);
+				}
+			}					
+			ComponentHelper helper = new ComponentHelper();
+			value = pack.getValue(type, WHITE_LIST);
+			if (value != null){
+				for (String friend : (EDataTypeUniqueEList<String>)value){
+					helper.addToWhiteList(friend);
+				}
+			}
+			value = pack.getValue(type, BLACK_LSIT);
+			if (value != null){
+				for (String enemy : (EDataTypeUniqueEList<String>)value){
+					helper.addToBlackList(enemy);
+				}
+			}
+			if (helper.isUseful()){
+				tempMem.put(packComp.getName(), helper);
+			}
+			for (org.eclipse.uml2.uml.Package subPack : pack.getNestedPackages()){
+				IComponent child = traverse(subPack);
+				if (child != null){
+					packComp.addComponent(child);
+				}else {
+					packComp.addPackage(subPack.getName());
+				}				
+			}
+		}
+		return packComp;
+	}
+	
+	private static boolean stereotypesExist(org.eclipse.uml2.uml.Package pack, String... stereoNames){
+		for (String name : stereoNames){
+			if (pack.getAppliedStereotype(name) != null){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+}

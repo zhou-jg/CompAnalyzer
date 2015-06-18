@@ -1,0 +1,143 @@
+package lab.sa.jdepend.model.validation;
+
+import static lab.sa.jdepend.util.StringUtil.tab;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+import lab.sa.jdepend.model.IComponent;
+import lab.sa.jdepend.model.internal.ObjectRegistry;
+
+public class InterfaceConsistencyChecker extends ModelValidator{
+	private Map<IComponent, Collection<String>> wrongApis = new HashMap<IComponent, Collection<String>>();
+	
+	public InterfaceConsistencyChecker(ObjectRegistry host){
+		super(host);
+	}
+	
+	public boolean validate() {
+		wrongApis.clear();
+		for (IComponent comp : getHost().getProjectComponents()) {
+			traverse2(comp);
+		}
+		if (wrongApis.size() == 0){
+			if (getSuccessor() != null){
+				return getSuccessor().validate();
+			}else {
+				return true;
+			}
+		}
+		setErrorInfo(initErrorInfo());
+		return false;
+	}
+	
+	private String initErrorInfo(){		
+		StringBuffer sb = new StringBuffer();
+		if (wrongApis.size() > 0){
+			sb.append("Declared interfaces are not found in the following components.\n");
+			for (IComponent comp : wrongApis.keySet()){
+				sb.append(tab());
+				sb.append("<component name=\"" + comp.getName() + "\">\n");			
+				for (String str : wrongApis.get(comp)){
+					sb.append(tab(2));
+					sb.append("<interface>" + str + "</interface>\n");
+				}
+				sb.append(tab());
+				sb.append("</component>\n");
+			}
+		}
+		
+		return sb.toString();
+	}
+	
+	/**
+	 * @return if interface consistence problems exist, i.e., a declared interface 
+	 * cannot be found in the visible scope of a component.
+	 * TODO a more efficient algorithm.
+	 */
+	private void traverse(IComponent node) {		
+		Set<String> apis = new HashSet<String>();
+		apis.addAll(node.getInterface()); 
+		
+		for (Iterator<String> api = apis.iterator(); api.hasNext();){			
+			if (node.getPackages().contains(api.next())){
+				//filter package interface contained in the component
+				api.remove();
+			}
+		}
+		
+		if (apis.size() > 0){		
+			for (Iterator<String> api = apis.iterator(); api.hasNext();){
+				/*filter class interface contained in the component. 
+				If the first char of the last segment (split by ".") of the 
+				interface is uppercase, then the api is considered a class.*/ 
+				String tempAPI = api.next();
+				int position = tempAPI.lastIndexOf(".");
+				if (position > -1){
+					String seg = tempAPI.substring(position + 1);
+					if (seg != null && Character.isUpperCase(seg.charAt(0))){
+						String pack = tempAPI.substring(0, tempAPI.lastIndexOf("."));
+						if (node.getPackages().contains(pack)){
+							api.remove();
+						}
+					}
+				}
+			}
+		}
+		
+		if (apis.size() > 0){
+			//check current interface among child interfaces
+			Collection<String> childApis = new HashSet<String>();
+			for (IComponent child : node.getComponents()){
+				boolean result = childApis.addAll(child.getInterface());
+				System.out.println(result);
+			}
+			if (!childApis.containsAll(apis)){
+				wrongApis.put(node, apis);
+			}
+		}
+		
+		for (IComponent child : node.getComponents()){
+			traverse(child);
+		}
+	}
+	
+	private void traverse2(IComponent node) {
+		Set<String> apiScope = new HashSet<String>(node.getPackages());
+		for (IComponent comp : node.getComponents()){
+			apiScope.addAll(comp.getInterface());
+		}
+		
+		Set<String> apis = new HashSet<String>(node.getInterface());
+		//直接删除明确接口声明的
+		apis.removeAll(apiScope);
+		//删除未明确声明的类形式的接口声明
+		if (apis.size() > 0){//在当前构件范围内处理类形式的接口声明
+			for (Iterator<String> api = apis.iterator(); api.hasNext() && apis.size() > 0;){
+				String tempAPI = api.next();
+				int position = tempAPI.lastIndexOf(".");
+				if (position > -1){
+					String seg = tempAPI.substring(position + 1);
+					if (seg != null && Character.isUpperCase(seg.charAt(0))){
+						String pack = tempAPI.substring(0, tempAPI.lastIndexOf("."));
+						if (apiScope.contains(pack)){
+							api.remove();
+						}
+					}
+				}
+			}
+		}
+		if (apis.size() > 0){
+			wrongApis.put(node, apis);
+		}
+		
+
+		for (IComponent child : node.getComponents()){
+			traverse2(child);
+		}
+	}
+}

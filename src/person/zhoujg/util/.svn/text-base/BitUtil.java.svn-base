@@ -1,0 +1,27 @@
+package lab.sa.jdepend.util;
+
+public class BitUtil {
+	public static boolean checkBit(int aValue, int aMask) {
+		return (aValue & aMask) == aMask;
+	}
+
+	public static int setBit(int aValue, int aMask) {
+		return aValue | aMask;
+	}
+
+	public static int toggleBit(int aValue, int aMask, boolean isSet) {
+		return isSet ? setBit(aValue, aMask) : clearBit(aValue, aMask);
+	}
+
+	public static int clearBit(int aValue, int aMask) {
+		return aValue & (aMask ^ 0xFFFFFFFF);
+	}
+
+	public static boolean checkBit(int aValue, int[] aMasks) {
+		for (int i = 0; i < aMasks.length; i++) {
+			if (checkBit(aValue, aMasks[i]))
+				return true;
+		}
+		return false;
+	}
+}

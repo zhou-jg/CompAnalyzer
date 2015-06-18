@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ns:schema xmlns="http://www.sa.lab/depend" xmlns:ns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://www.sa.lab/depend">	
+	<ns:element name="package" type="ns:string"/>
+	<ns:element name="component" type="compType"/>
+	<ns:element name="layer" type="layerType"/>
+	
+	<ns:complexType name="compType">
+		<ns:sequence>
+			<ns:element maxOccurs="unbounded" minOccurs="0" name="package" type="ns:string"/>
+			<ns:element minOccurs="0" name="interfaces">
+				<ns:complexType>
+					<ns:choice>
+						<ns:sequence>
+							<ns:element maxOccurs="unbounded" minOccurs="0" name="view" type="viewType"/>							
+						</ns:sequence>
+						<ns:sequence>
+							<ns:element maxOccurs="unbounded" minOccurs="0" name="interface" type="ns:string"/>
+						</ns:sequence>
+					</ns:choice>
+				</ns:complexType>
+			</ns:element>
+			<ns:element minOccurs="0" name="whiteList" type="compList"/>
+			<ns:element minOccurs="0" name="blackList" type="compList"/>
+			<ns:element minOccurs="0" name="children">
+				<ns:complexType>
+					<ns:sequence>
+						<ns:element maxOccurs="unbounded" minOccurs="0" ref="component"/>
+						<ns:element maxOccurs="unbounded" minOccurs="0" ref="layer"/>
+					</ns:sequence>
+				</ns:complexType>
+			</ns:element>
+			<ns:element minOccurs="0" name="dependencies" type="compList"/>
+			<ns:element minOccurs="0" name="dependants" type="compList"/>
+		</ns:sequence>
+		<ns:attribute name="name" type="ns:string"/>
+		<ns:attribute default="false" name="strictLayer" type="booleanType"/>
+		<ns:attribute default="false" name="sealed" type="booleanType"/>
+		<ns:attribute name="packages" type="ns:integer"/>
+	</ns:complexType>
+	
+	<ns:complexType name="modelType">
+		<ns:sequence>
+			<ns:element maxOccurs="unbounded" minOccurs="0" ref="component"/>
+			<ns:element maxOccurs="unbounded" minOccurs="0" ref="layer"/>
+		</ns:sequence>
+	</ns:complexType>
+	
+	<ns:complexType name="layerType">
+		<ns:complexContent>
+			<ns:extension base="compType">
+				<ns:attribute name="level" type="ns:integer" use="required"/>
+			</ns:extension>
+		</ns:complexContent>						
+	</ns:complexType>	
+	
+	<ns:complexType name="compList">
+		<ns:sequence>
+			<ns:element maxOccurs="unbounded" minOccurs="0" name="component" type="ns:string"/>
+		</ns:sequence>
+	</ns:complexType>
+	
+	<ns:simpleType name="booleanType">
+		<ns:restriction base="ns:string">
+			<ns:enumeration value="true"/>
+			<ns:enumeration value="false"/>
+		</ns:restriction>
+	</ns:simpleType>
+	
+	<ns:complexType name="viewType">
+		<ns:sequence>
+			<ns:element maxOccurs="unbounded" minOccurs="0" name="interface" type="ns:string"/>
+			<ns:element minOccurs="0" name="whiteList" type="compList"/>
+			<ns:element minOccurs="0" name="blackList" type="compList"/>
+		</ns:sequence>
+	</ns:complexType>
+</ns:schema>

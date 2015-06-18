@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="dependency analysis" report="G:/testConfig.xml"
+	scritLayer="false">
+	<classPath>
+		<path>E:/workspace/lab.sa.jdepend/bin</path>
+	</classPath>
+	<components>
+		<component name="model">
+			<package>lab.sa.jdepend.model</package>
+			<package>lab.sa.jdepend.model.problem</package>
+			<interfaces>
+				<interface>lab.sa.jdepend.model</interface>
+				<interface>lab.sa.jdepend.model.problem</interface>
+			</interfaces>
+			<children>
+				<component name="internal">
+					<package>lab.sa.jdepend.model.internal</package>
+				</component>
+				<component name="modelUtil">
+					<package>lab.sa.jdepend.model.util</package>
+					<interfaces>						
+						<view name="internalAPI">
+							<interface>lab.sa.jdepend.model.util</interface>
+							<whiteList>
+								<component>internal</component>
+							</whiteList>
+						</view>
+					</interfaces>
+				</component>
+			</children>
+		</component>
+		<component name="validation">
+			<package>lab.sa.jdepend.model.validation</package>
+			<interfaces>
+				<view name="validation">
+					<interface>lab.sa.jdepend.model.validation</interface>
+					<blackList>
+						<component>model</component>
+					</blackList>
+				</view>
+			</interfaces>
+		</component>
+		<component name="util">
+			<package>lab.sa.jdepend.util</package>
+			<interfaces>
+				<view name="util">
+					<interface>lab.sa.jdepend.util</interface>
+				</view>
+			</interfaces>
+		</component>
+	</components>
+</project>

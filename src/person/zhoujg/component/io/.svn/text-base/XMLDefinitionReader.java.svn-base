@@ -1,0 +1,230 @@
+package lab.sa.jdepend.io;
+
+import static lab.sa.jdepend.util.XMLUtil.getAttribute;
+import static lab.sa.jdepend.util.XMLUtil.getAttributeAsBoolean;
+import static lab.sa.jdepend.util.XMLUtil.getAttributeAsInt;
+import static lab.sa.jdepend.util.XMLUtil.getDocumentBuilder;
+import static lab.sa.jdepend.util.XMLUtil.getElementValue;
+import static lab.sa.jdepend.util.XMLUtil.getFirstSubElementByName;
+import static lab.sa.jdepend.util.XMLUtil.getFirstSubElementByNames;
+import static lab.sa.jdepend.util.XMLUtil.getSubElementsByName;
+import static lab.sa.jdepend.util.XMLUtil.getSubElementsByNames;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+
+import lab.sa.jdepend.PackageFilter;
+import lab.sa.jdepend.io.internal.ComponentHelper;
+import lab.sa.jdepend.model.Component;
+import lab.sa.jdepend.model.IComponent;
+import lab.sa.jdepend.model.Layer;
+import lab.sa.jdepend.model.Project;
+import lab.sa.jdepend.util.StringUtil;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+public class XMLDefinitionReader {
+
+	private Project pro = null; 
+	private String modelFile = null;
+	private String reportFile = null;
+	private HashMap<String, IComponent> compRegistry = new HashMap<String, IComponent>();
+	private HashMap<String, ComponentHelper> tempMem = new HashMap<String, ComponentHelper>();
+	
+	public Project read(String fileName){
+		return read(new File(fileName));
+	}
+	
+	public Project read(File file){
+		try {
+			return read(new FileInputStream(file));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			throw new DepException(DepException.FILE_WRONG);
+		}
+	}
+	
+	public Project read(InputStream is){
+		try {
+			return read(getDocumentBuilder().parse(is));
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DepException(DepException.FILE_WRONG);
+		} 
+	}
+	
+	private Project read(Document doc) {
+		Element root = doc.getDocumentElement();
+		pro = new Project(getAttribute(root, "name"));
+		pro.setCircleFilter(getCircleFilter(root));
+		pro.isStrictLayer(getAttributeAsBoolean(root, "strictLayer", false));
+		setClassPath(root);
+		setPackageFilter(root);
+		setComponentModel(root);
+		reportFile = getReportFile(root);
+		return pro;
+	}
+
+	private void setComponentModel(Element root) {
+		Element model = getFirstSubElementByName(root, "model");
+		Collection<IComponent> comps = new ArrayList<IComponent>();
+		if (model!= null){
+			modelFile = getElementValue(model);
+			comps = UMLModelParser.parse(modelFile);
+			
+		}else {
+			model = getFirstSubElementByNames(root, "components", "layers");
+			if (model != null){
+				List<Element> compList = getSubElementsByNames(model, "component", "layer");
+				for (Element ele : compList){
+					comps.add(parseComponent(ele));
+				}
+				for (IComponent comp : compRegistry.values()){
+					ComponentHelper helper = tempMem.get(comp.getName());
+					if (helper != null){
+						for (String wComp : helper.getWhiteList()){
+							comp.addsToWhiteList(compRegistry.get(wComp));
+						}
+						for (String bComp : helper.getBlackList()){
+							comp.addsToBlackList(compRegistry.get(bComp));
+						}
+					}
+				}
+			}
+		}
+		for (IComponent comp : comps){
+			pro.addComponent(comp);
+		}
+	}
+
+	private IComponent parseComponent(Element ele) {
+		String type = ele.getNodeName();
+		String name = getAttribute(ele, "name");
+
+		IComponent comp = null;
+		if (type.equals("component")){
+			comp = new Component(name);
+		}else{
+			int level = getAttributeAsInt(ele, "level");
+			comp = new Layer(name, level);
+		}
+		comp.isStrictLayer(getAttributeAsBoolean(ele, "strictLayer", false));
+		comp.isSealed(getAttributeAsBoolean(ele, "sealed", false));
+		compRegistry.put(name, comp);
+
+		for (Element child : getSubElementsByName(ele, "package")){
+			comp.addPackage(getElementValue(child));
+		}
+		
+		Element list = getFirstSubElementByName(ele, "interfaces");
+		if (list != null){
+//			comp.isInterfaceUpgradable(getAttributeAsBoolean(list, "upgradable", false));
+			List<Element> items = getSubElementsByName(list, "interface");
+			for (Element item : items){
+				comp.addsToInterface(getElementValue(item));
+			}
+		}
+		
+		ComponentHelper helper = new ComponentHelper();
+		list = getFirstSubElementByName(ele, "whiteList");
+		if (list != null){
+			List<Element> items = getSubElementsByName(list, "comp");
+			for (Element item : items){
+				helper.addToWhiteList(getElementValue(item));
+			}
+		}
+		list = getFirstSubElementByName(ele, "blackList");
+		if (list != null){
+			List<Element> items = getSubElementsByName(list, "comp");
+			for (Element item : items){
+				helper.addToBlackList(getElementValue(item));
+			}
+		}
+		if (helper.isUseful()){
+			tempMem.put(name, helper);
+		}
+		
+		list = getFirstSubElementByName(ele, "children");
+		if (list != null){
+			List<Element> items = getSubElementsByName(list, "component");
+			for (Element item : items){
+				comp.addComponent(parseComponent(item));
+			}
+		}
+		return comp;
+	}
+
+	private void setPackageFilter(Element root) {
+		Element packageFilter = getFirstSubElementByName(root, "packageFilter");
+		if (packageFilter != null){
+			PackageFilter filter = new PackageFilter();
+			List<Element> packs = getSubElementsByName(packageFilter, "package");
+			for (Element pack : packs){
+				try {
+					filter.addPackage(getElementValue(pack));
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new DepException(DepException.PACK_FILTER_WRONG);
+				}
+			}			
+			pro.setPackageFilter(filter);
+		}
+	}
+
+	private void setClassPath(Element root) {
+		Element classPath = getFirstSubElementByName(root, "classPath");
+		if (classPath != null){
+			List<Element> paths= getSubElementsByName(classPath, "path");
+			for (Element path : paths){
+				try {
+					pro.addClassPath(getElementValue(path));
+				} catch (IOException e) {
+					e.printStackTrace();
+					throw new DepException(DepException.PATH_WRONG);
+				}
+			}
+		}
+	}
+
+	public String getModelFileName(){
+		return modelFile;
+	}
+	
+	public String getReportFileName(){
+		return reportFile;
+	}
+	
+	private String getReportFile(Element doc) {
+		return getAttribute(doc, "report");
+	}
+
+	private int getCircleFilter(Element doc) {
+		String filterStr = getAttribute(doc, "circleFilter");
+		if (StringUtil.isNullOrEmpty(filterStr)){
+			return 0;
+		}
+		Collection<String> filters = StringUtil.getStringItems(filterStr, " ");
+		int level = 0;
+		for (String f : filters){
+			if (f.equals("SAME_PACKAGE")){
+				level += Project.SAME_PACKAGE;
+			}else if (f.equals("SAME_PACKAGE_HIERACHY")){
+				level += Project.SAME_PACKAGE_HIERACHY;
+			}else if (f.equals("CLASS_LEVEL")){
+				level += Project.CLASS_LEVEL;
+			}else if (f.equals("PACKAGE_LEVEL")){
+				level += Project.PACKAGE_LEVEL;
+			}
+		}
+		return level;
+	}
+	
+}

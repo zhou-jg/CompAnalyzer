@@ -1,0 +1,78 @@
+package lab.sa.jdepend.model.validation;
+
+import static lab.sa.jdepend.util.StringUtil.tab;
+
+import java.util.Collection;
+import java.util.HashSet;
+
+import lab.sa.jdepend.model.IComponent;
+import lab.sa.jdepend.model.internal.ObjectRegistry;
+import lab.sa.jdepend.model.util.CompPair;
+
+/**
+ * We not allow an ancestor in the black list of its descendants, and vice versa.	
+ * 
+ * @author zhoujg
+ * @date 2014年2月25日
+ *
+ */
+
+public class BlackListConsistencyChecker extends ModelValidator{
+
+	private Collection<CompPair> pairs = new HashSet<CompPair>();
+	
+	public BlackListConsistencyChecker (ObjectRegistry host) {
+		super(host);
+	}
+	
+	public boolean validate(){
+		pairs.clear();
+		for (IComponent comp : getHost().getProjectComponents()){
+			traverse(comp);
+		}
+		if (pairs.size() == 0){
+			if (getSuccessor() != null) {
+				return getSuccessor().validate();
+			}else{
+				return true;
+			}
+		}
+		initErrorInfo();
+		return false;
+	}
+
+	private String initErrorInfo() {
+		StringBuffer sb = new StringBuffer();
+		if (pairs.size() > 0) {
+			sb.append("The former component (left) should not be in the black list of the latter component (right).\n");
+			for (CompPair pair : pairs){
+				sb.append(tab());
+				sb.append("<pair>" + pair.getLeft().getName() + ", " + pair.getRight().getName() + "</pair>\n");
+			}
+		}		
+		
+		return sb.toString();
+	}
+	
+	private void traverse(IComponent node){		
+		IComponent parent = node.getParent();
+		while (parent != null) {
+			//check node in its ancestors' black lists
+			if (parent.getSelfDeclaredBlackList().contains(node)){
+//				found = true;
+				pairs.add(new CompPair(node, parent));
+			}else if (node.getSelfDeclaredBlackList().contains(parent)){
+				//check its ancestors in node's black list
+//				found = true;
+				pairs.add(new CompPair(parent, node));
+			}else {
+				parent = parent.getParent();
+			}
+		}		
+		
+		//check node's children recursively
+		for (IComponent child : node.getComponents()){
+			traverse(child);
+		}
+	}
+}
