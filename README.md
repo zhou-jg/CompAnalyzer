@@ -26,8 +26,7 @@ to compute them without memery overflow or too long time. So, if you have one, p
 Thank you very much!
 
 You can design a component architecture for your software with Java API provided by CompAnalyzer or alternatively with a component 
-defintion file (.xml) feeded to CompAnalyzer. In test/ directory, I provide such a file (maybe the simplest), and the result is
-output in another file for your reference. Since CompAnalyzer leverage jDepend, you can configure a system (to be analyzed) with
-jDepend APIs.
+defintion file (.xml) feeded to CompAnalyzer. In test/directory, I provide such a file (maybe the simplest), and the result is
+output in another file for your reference. Since CompAnalyzer leverage jDepend, you can configure a system (to be analyzed) with jDepend APIs. All your configuration must set throught a person.zhoujg.component.Project object, and with this object you can analyze your software and get any problems and dependency data.
 
 Hope you like it! And I appreciate any feedback from you, where bugs and other addvices. 
